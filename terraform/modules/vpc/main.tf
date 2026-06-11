@@ -73,7 +73,7 @@ resource "aws_route_table_association" "public" {
 
 # ── Route Table privada ───────────────────────────────────────────────────────
 # Las tasks de Fargate necesitan salida a Internet para pull de imágenes Docker.
-# Usamos un NAT Gateway por sencillez. En AWS Academy puede tener restricciones;
+# Usamos un NAT Gateway por sencillez. En AWS Academy puede tener restricciones,
 # si falla, usa VPC Endpoints para ECR como alternativa.
 
 resource "aws_eip" "nat" {
