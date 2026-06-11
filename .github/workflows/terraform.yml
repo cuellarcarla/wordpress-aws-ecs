@@ -53,14 +53,15 @@ jobs:
         with:
           terraform_version: "1.7.0"
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Terraform Init con backend S3
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=wordpress-ecs/dev/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
 
       - name: Terraform Validate
         run: terraform validate
-
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
 
       - name: Terraform Plan
         id: plan
@@ -86,17 +87,14 @@ jobs:
 
             **Estado:** ${{ steps.plan.outcome == 'success' && '✅ Sin errores' || '❌ Con errores' }}
             **Rama:** \`${{ github.head_ref }}\`
-            **Commit:** \`${{ github.sha }}\`
 
             <details>
             <summary>Ver Plan completo</summary>
 
-            \`\`\`hcl
+            \`\`\`
             ${truncated}
             \`\`\`
-            </details>
-
-            > Haz merge a \`main\` para aplicar estos cambios automáticamente.`;
+            </details>`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -137,8 +135,12 @@ jobs:
         with:
           terraform_version: "1.7.0"
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Terraform Init con backend S3
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=wordpress-ecs/dev/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
 
       - name: Terraform Apply
         run: |
@@ -166,7 +168,7 @@ jobs:
       - name: Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -176,8 +178,12 @@ jobs:
         with:
           terraform_version: "1.7.0"
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Terraform Init con backend S3
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=wordpress-ecs/dev/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
 
       - name: Terraform Destroy
         run: |

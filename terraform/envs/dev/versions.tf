@@ -8,13 +8,11 @@ terraform {
     }
   }
 
-  # Opcional: backend S3 para guardar el estado remotamente
-  # Descomenta y configura si tienes un bucket S3 disponible en tu cuenta
-  # backend "s3" {
-  #   bucket = "mi-terraform-state-bucket"
-  #   key    = "wordpress-ecs/dev/terraform.tfstate"
-  #   region = "us-east-1"
-  # }
+  backend "s3" {
+    # Estos valores los pasa GitHub Actions via -backend-config en el terraform init
+    # No se hardcodean aquí para que funcione con cualquier cuenta de Academy
+    # (las credenciales de Academy cambian cada sesión)
+  }
 }
 
 provider "aws" {

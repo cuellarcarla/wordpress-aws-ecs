@@ -1,0 +1,58 @@
+name: Bootstrap - Crear bucket S3 para Terraform state
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  # Cambia esto si quieres otro nombre (debe ser único globalmente en S3)
+  TF_STATE_BUCKET: wordpress-ecs-tfstate-${{ github.repository_owner }}
+
+jobs:
+  bootstrap:
+    name: "Crear S3 bucket para tfstate"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Crear bucket S3 para tfstate
+        run: |
+          BUCKET="wordpress-ecs-tfstate-${{ github.repository_owner }}"
+          BUCKET=$(echo "$BUCKET" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+
+          echo "Creando bucket: $BUCKET"
+
+          # us-east-1 NO lleva LocationConstraint (peculiaridad de AWS)
+          if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+            echo "El bucket $BUCKET ya existe, no hace falta crearlo"
+          else
+            aws s3api create-bucket \
+              --bucket "$BUCKET" \
+              --region us-east-1
+
+            # Bloquear acceso público
+            aws s3api put-public-access-block \
+              --bucket "$BUCKET" \
+              --public-access-block-configuration \
+                "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+
+            # Versionado (permite recuperar estados anteriores)
+            aws s3api put-bucket-versioning \
+              --bucket "$BUCKET" \
+              --versioning-configuration Status=Enabled
+
+            echo "Bucket creado correctamente: $BUCKET"
+          fi
+
+          echo ""
+          echo "========================================"
+          echo "Añade este secret en GitHub Actions:"
+          echo "  TF_STATE_BUCKET = $BUCKET"
+          echo "========================================"
